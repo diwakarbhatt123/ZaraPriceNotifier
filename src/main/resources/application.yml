@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: jdbc:sqlite:./zara.db
+    driver-class-name: org.sqlite.JDBC
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.community.dialect.SQLiteDialect
+
+zara:
+  poll-interval: PT2S
+  country-path-default: uk/en
+  store-id-default: 10706
+  request-cookie: "ITXSESSIONID=fcac2e0494404c869079126113bb7b98; _abck=1BB0C73E0DB5B333FE164D3B4B012040~-1~YAAQkXd7XHwOoNabAQAAx4mu1w+zAZZ7doWmWdXbd+KeFOardtpmSvN5z/Fe7UvuYpyOuan2oI8nSYw1zTo0jXw6zu5yYzTEW6LKiOGooJ7/phsq7Xymx6QOjCwsZ/wLxBcJdgP8gXxWXKyLhuOJvAd3RFoxoIuK6VNXgvD8Dzyb/oTalvcLr9q4zgy/f/7AvrfYHlX7qPafp9e2lPdr0Qfq1kLQS86AEehHUIfRZNKXU6EUvakBxhh25ifZ5rqAUWgbjV4W7g67xPKoCe+TdErsB+MTdq3RXqkfpbpelYddONMAX0Z+NwNKeXa+tmnS+yW2hlv6wfmJ0r3zV6AH7mdKsX05BgJ0GajfPi1QZtyGYnblt4rcJ723hPlu399hZuGhAAFXpPbTfRlLksxTf5opmx1++sP8OrRi5MRcCceDIyiOZ/Z/OgjREyJ0rckYBgFRB1hKNDM96VpIXinWzSc=~-1~-1~-1~-1~-1; ak_bmsc=73A566A21DADBC02CA8C5A3DD5256B8C~000000000000000000000000000000~YAAQkXd7XH0OoNabAQAAx4mu1x4051j9Yc1YCeEuRTUwi6cyb/bjb8ANaziy8mZTFrjSaqKG51ypuzBv5sreBln0K4FDaBBcTfnlislwMPiHMs12y2PoOK5EWI3VDPsyfvKhuTWzK3SqtHCpo/MDy8V0hfgUubDccdHjM6gTSpgUnpREnXQ9ezrcAQkoUAnf4o60Y3QO1gjGeWfMAFcOtQyvwKHQQII7Xlnvj0H8zpXhUX85clF/h0CeyCOrl4UnVem/Xa69FOWnPihDcPaeMbwAVuOZB5iEjQM0OALX4VPyYAiCQD4HgWhTTV4/qRuHZDTZgOCQhrM4G0IhVjUf/BTht/7Rb5xi8MtTSw==; bm_sv=1F957BDC59F4B8F07978C11269925826~YAAQkXd7XKgRoNabAQAAFLCu1x7iZ1eM9gS60LuONlAFhn+cPBboxScS/TJDX/aC1Txx3SHb0qnlzMMw0vurvfrhnGe+C3tMmusLk4243w/4g5iLE3bOI8h4m6t9Oa0LLgQ31Dj56ifq8ytaVPI++HMQu2V/lI35FeHi6Q6dP1LJcNqk0eGKVLD2o91spo2YS47hBs3ucHDnMQdNabv+otj1V8H2XiTv+w/sSIYZi4EKc6j8VPZ3lEvnJdcBGg==~1; bm_sz=BF6435EFFAA6D60908FC3541412358F1~YAAQkXd7XH4OoNabAQAAx4mu1x45rqyZoAK/8ooHdnk1/Ht8pcRhMnJ+1uHufe+dpnV4c0gaPaYE7l/6sDWmV9nVBDIwPBXl0oRUrZR/zB3h/7EsDcR6lT/oxHS4U13d8NgG+VyFEq7LzxwbYFd3RbdX2rW6MQzPfB6JuENeOxmchmG1vofVeWCmHJySgp6IplJ6bWhtcnU/7y7Jlae9gC4LFhE5yhOUTow9i2rLcjhEaA/NrvM+lU1XWQt0HvySIRyWFw0Hf7TxPrIHRsdcBYJYBv5NPoQ8vhE7cIFZlz2LgwQYzJ1mRIfwH+B6e5Z4XBCVCjplWEg2vXn7tCm1Y0aiRoY89x8JTYJne5I=~3420468~4403253; TS0122c9b6=01f21275d020d5081c7fb2f76589c9a279a986bd07ced18d0e575791288f0ca851b6e29e3f40744b6ff4e3a819106168e0e303d8ae"
+  accept-language: "en-GB,en;q=0.9"
+  referer-base: "https://www.zara.com"
+
+telegram:
+  bot-token: ""
+  chat-id: ""

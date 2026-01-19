@@ -1,0 +1,94 @@
+================================
+IntelliJ IDEA
+================================
+
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+IntelliJ Gradle
+
+.gradle/
+**/build/
+
+================================
+Java / Gradle
+================================
+
+*.class
+.log
+hs_err_pid
+
+Gradle wrapper binaries should be committed
+
+!gradle/wrapper/gradle-wrapper.jar
+
+================================
+Node / Frontend (Next.js / React)
+================================
+
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+.next/
+dist/
+build/
+coverage/
+
+================================
+Environment / Secrets
+================================
+
+.env
+.env.*
+!.env.example
+
+================================
+Docker
+================================
+
+**/*.env
+docker-compose.override.yml
+
+Docker runtime artifacts
+
+**/docker-data/
+**/data/
+
+================================
+Logs & Runtime Files
+================================
+
+logs/
+*.log
+tmp/
+temp/
+
+================================
+OS Files
+================================
+
+.DS_Store
+Thumbs.db
+
+================================
+Testing / Tooling
+================================
+
+coverage/
+reports/
+
+================================
+Misc
+================================
+
+*.swp
+*.swo
+*.bak
+*.orig
+*.rej
