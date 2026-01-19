@@ -1,0 +1,24 @@
+{
+  "name": "zara-price-notifier",
+  "version": "1.0.0",
+  "description": "Zara stock notifier using Puppeteer Stealth",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "NODE_ENV=development node src/index.js",
+    "puppeteer:install": "node -e \"console.log('Puppeteer downloads Chromium on npm install.');\""
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "cookie": "0.7.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "luxon": "^3.5.0",
+    "node-fetch": "^3.3.2",
+    "puppeteer": "^23.11.1",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "set-cookie-parser": "^2.6.0"
+  }
+}
