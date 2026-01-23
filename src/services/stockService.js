@@ -37,9 +37,11 @@ const buildSkuAvailabilityMap = (availability) => {
   return map;
 };
 
+const notifiableStatuses = new Set(['in_stock', 'low_on_stock']);
+
 const isAnyInStock = (skus, availabilityMap) => {
   for (const sku of skus) {
-    if (availabilityMap.get(Number(sku)) === 'in_stock') {
+    if (notifiableStatuses.has(availabilityMap.get(Number(sku)))) {
       return true;
     }
   }

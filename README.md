@@ -68,7 +68,7 @@ curl -X DELETE http://localhost:8080/api/watch/1
 ## How it works
 - Polls product-details to map size -> SKU (cached 24h in SQLite).
 - Polls availability endpoint for SKU availability.
-- Only notifies when a watched item transitions from not-in-stock to in-stock.
+- Only notifies when a watched item transitions from not-in-stock to in-stock or low-on-stock.
 
 ## Troubleshooting
 - Headful mode sometimes works better:
