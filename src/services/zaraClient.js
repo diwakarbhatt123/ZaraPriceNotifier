@@ -37,6 +37,9 @@ class ZaraClient {
   async ensurePage() {
     if (this.page) return;
     const args = [];
+    if(process.platform === 'linux') {
+      args.push('--no-sandbox', '--disable-setuid-sandbox')
+    }
     if (config.zara.proxyServer) {
       args.push(`--proxy-server=${config.zara.proxyServer}`);
     }
