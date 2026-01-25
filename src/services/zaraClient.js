@@ -129,6 +129,11 @@ class ZaraClient {
     console.log(`[zara] request url=${url} headers=${JSON.stringify(headers)}`);
     console.log(`[zara] response url=${url} status=${result.status} contentType=${contentType} bodyLength=${result.body ? result.body.length : 0} headers=${JSON.stringify(result.headers)} snippet=${snippet}`);
 
+    if (result.status === 403) {
+      console.error(`[zara] received 403 for ${url}; exiting so systemd can restart the service`);
+      process.exit(1);
+    }
+
     if (result.status >= 400) {
       throw new Error(`HTTP ${result.status} from ${url}, body=${result.body.slice(0, 200)}`);
     }
