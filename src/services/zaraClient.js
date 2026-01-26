@@ -154,6 +154,11 @@ class ZaraClient {
     return this.fetchJson(url);
   }
 
+  async fetchStoreLocator(countryPath, lat, lng, radius) {
+    const url = `https://www.zara.com/${countryPath}/stores-locator/extended/search?lat=${lat}&lng=${lng}&isDonationOnly=false&showOnlyPickup=false&showStoresCapacity=true&radius=${radius}&ajax=true`;
+    return this.fetchJson(url);
+  }
+
   async close() {
     if (this.page) await this.page.close();
     if (this.browser) await this.browser.close();

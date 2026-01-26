@@ -30,7 +30,10 @@ const config = {
     ,
     proxyServer: process.env.ZARA_PROXY_SERVER || '',
     proxyUsername: process.env.ZARA_PROXY_USERNAME || '',
-    proxyPassword: process.env.ZARA_PROXY_PASSWORD || ''
+    proxyPassword: process.env.ZARA_PROXY_PASSWORD || '',
+    storeLocatorLat: Number(process.env.ZARA_STORE_LOCATOR_LAT || 51.5957221),
+    storeLocatorLng: Number(process.env.ZARA_STORE_LOCATOR_LNG || -0.2527881),
+    storeLocatorRadius: Number(process.env.ZARA_STORE_LOCATOR_RADIUS || 30)
   },
   telegram: {
     botToken: process.env.TELEGRAM_BOT_TOKEN || '',

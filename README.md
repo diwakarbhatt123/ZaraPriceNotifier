@@ -31,6 +31,9 @@ ZARA_COOKIE_REFRESH_URL=https://www.zara.com/
 ZARA_PROXY_SERVER=
 ZARA_PROXY_USERNAME=
 ZARA_PROXY_PASSWORD=
+ZARA_STORE_LOCATOR_LAT=51.5957221
+ZARA_STORE_LOCATOR_LNG=-0.2527881
+ZARA_STORE_LOCATOR_RADIUS=30
 
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
@@ -41,6 +44,7 @@ Notes:
 - This build uses Puppeteer with stealth. Chromium only.
 - If Zara blocks Puppeteer, consider `ZARA_PLAYWRIGHT_HEADLESS=false`, or a residential proxy.
 - These endpoints are unofficial and may change.
+- Store availability checks use the store-locator endpoint with your lat/lng/radius.
 
 ## Run
 ```bash
