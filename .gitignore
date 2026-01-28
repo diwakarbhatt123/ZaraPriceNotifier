@@ -1,6 +1,8 @@
 node_modules/
+web/node_modules/
 .env
 .env.*
+web/.env*
 *.log
 .DS_Store
 zara.db
@@ -9,3 +11,4 @@ playwright-profile/
 coverage/
 .vscode/
 .idea/
+web/.next/

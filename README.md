@@ -51,6 +51,20 @@ Notes:
 npm start
 ```
 
+## Web UI (Next.js)
+The UI lives in `web/` and proxies to this API via Next.js route handlers.
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+Set the API base for the UI:
+```ini
+ZARA_API_BASE=http://localhost:8080
+```
+
 ## API
 ### Create watch item
 ```bash

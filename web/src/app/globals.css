@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-fog text-ink font-body;
+  min-height: 100vh;
+}
+
+::selection {
+  background: #ff6b3d;
+  color: #0b0d12;
+}
