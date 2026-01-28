@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 const apiBase = process.env.ZARA_API_BASE || 'http://localhost:8080';
 
-export async function DELETE(_request: Request, context: { params: { id: string } }) {
+export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
   const res = await fetch(`${apiBase}/api/watch/${params.id}`, { method: 'DELETE' });
   const body = await res.text();
