@@ -15,7 +15,12 @@ export const startScheduler = () => {
       try {
         await checkStockForItem(item);
       } catch (err) {
-        console.warn(`Poll failed for productId=${item.product_id}: ${err.message}`);
+        const message = err?.message || String(err);
+        console.warn(`Poll failed for productId=${item.product_id}: ${message}`);
+        if (message.includes('Navigation timeout')) {
+          console.error('Navigation timeout detected; exiting so systemd can restart the service');
+          process.exit(1);
+        }
       }
     }
   };
