@@ -23,3 +23,28 @@ body {
   letter-spacing: -0.16em;
   line-height: 0.8;
 }
+
+.editorial-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(90deg, rgba(248, 248, 245, 0.94) 0%, rgba(248, 248, 245, 0.82) 48%, rgba(248, 248, 245, 0.46) 100%),
+    url('/images/editorial-tailoring-background.png');
+  background-position: center, right top;
+  background-repeat: no-repeat;
+  background-size: cover, min(56vw, 760px) auto;
+  opacity: 0.72;
+}
+
+@media (max-width: 767px) {
+  .editorial-background {
+    background-image:
+      linear-gradient(180deg, rgba(248, 248, 245, 0.88) 0%, rgba(248, 248, 245, 0.96) 58%, rgba(248, 248, 245, 1) 100%),
+      url('/images/editorial-tailoring-background.png');
+    background-position: center, right top;
+    background-size: cover, auto 58rem;
+    opacity: 0.42;
+  }
+}

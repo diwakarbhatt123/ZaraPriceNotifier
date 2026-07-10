@@ -148,8 +148,9 @@ export default function Page() {
   };
 
   return (
-    <main className="min-h-screen bg-white text-zara-black">
-      <nav className="flex items-center justify-between border-b border-zara-black px-5 py-5 md:px-10">
+    <main className="relative min-h-screen overflow-hidden bg-[#f8f8f5]/85 text-zara-black">
+      <div className="editorial-background" aria-hidden="true" />
+      <nav className="relative z-10 flex items-center justify-between border-b border-zara-black px-5 py-5 md:px-10">
         <a className="zara-logo" href="#top" aria-label="Zara Watchlist home">ZARA</a>
         <p className="hidden text-[10px] font-medium uppercase tracking-[0.18em] md:block">
           Availability observer / London
@@ -159,7 +160,7 @@ export default function Page() {
         </a>
       </nav>
 
-      <div id="top" className="mx-auto max-w-[1600px] px-5 md:px-10">
+      <div id="top" className="relative z-10 mx-auto max-w-[1600px] px-5 md:px-10">
         <header className="grid min-h-[460px] border-b border-zara-black py-10 md:grid-cols-12 md:py-16">
           <div className="flex flex-col justify-between md:col-span-8 md:pr-10">
             <p className="text-[10px] uppercase tracking-[0.22em]">Personal stock notifier</p>
@@ -270,7 +271,7 @@ export default function Page() {
         </section>
       </div>
 
-      <footer className="bg-zara-black px-5 py-10 text-white md:px-10">
+      <footer className="relative z-10 bg-zara-black px-5 py-10 text-white md:px-10">
         <div className="mx-auto flex max-w-[1600px] flex-col justify-between gap-8 md:flex-row md:items-end">
           <p className="zara-logo text-white">ZARA</p>
           <p className="max-w-sm text-xs leading-5 text-white/60">Availability changes quickly. Your watcher checks the items you choose and sends Telegram notifications when stock returns.</p>
