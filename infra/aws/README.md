@@ -104,6 +104,44 @@ curl http://127.0.0.1:3000
 
 ## Update the application
 
+### Automatic deployments with GitHub Actions
+
+The included workflow builds the backend and frontend on every push to `V1`, authenticates to AWS using GitHub OIDC, and deploys through Systems Manager. No permanent AWS access keys are stored in GitHub.
+
+Run this once from your authenticated local machine:
+
+```bash
+./infra/aws/setup-github-actions.sh
+```
+
+The setup script creates a branch-restricted IAM role and, when the GitHub CLI is authenticated, configures these repository variables automatically:
+
+- `AWS_DEPLOY_ROLE_ARN`
+- `AWS_REGION`
+- `AWS_STACK_NAME`
+
+After setup, push to `V1` or run **Build and deploy** manually from the GitHub Actions page. Each deployment is built under `/opt/zara-notifier-releases/<commit>`, switched atomically, health-checked on ports 8080 and 3000, and rolled back if either check fails. The newest three releases are retained.
+
+Useful deployment diagnostics:
+
+```bash
+sudo systemctl status zara-notifier zara-notifier-web
+sudo journalctl -u zara-notifier -u zara-notifier-web -n 100 --no-pager
+readlink -f /opt/zara-notifier-current
+```
+
+Override the GitHub repository, branch, or stack when setting CI up:
+
+```bash
+GITHUB_ORGANIZATION=your-user \
+GITHUB_REPOSITORY=ZaraPriceNotifier \
+GITHUB_BRANCH=main \
+APPLICATION_STACK_NAME=zara-notifier \
+./infra/aws/setup-github-actions.sh
+```
+
+### Manual update
+
 For ordinary application changes, update the instance in place:
 
 ```bash

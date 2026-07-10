@@ -199,6 +199,8 @@ Resources:
             sudo -u ubuntu env HOME=/home/ubuntu npm ci
             sudo -u ubuntu env HOME=/home/ubuntu NODE_OPTIONS=--max-old-space-size=768 npm run build
 
+            ln -sfn "$REPO_DIR" /opt/zara-notifier-current
+
             get_secret() {
               aws ssm get-parameter --region '${AWS::Region}' --name "$1" --with-decryption --query Parameter.Value --output text 2>/dev/null || true
             }
@@ -249,7 +251,7 @@ Resources:
             Type=simple
             User=ubuntu
             Group=ubuntu
-            WorkingDirectory=/opt/zara-notifier
+            WorkingDirectory=/opt/zara-notifier-current
             EnvironmentFile=/etc/zara-notifier/backend.env
             ExecStart=/usr/bin/npm start
             Restart=always
@@ -270,7 +272,7 @@ Resources:
             Type=simple
             User=ubuntu
             Group=ubuntu
-            WorkingDirectory=/opt/zara-notifier/web
+            WorkingDirectory=/opt/zara-notifier-current/web
             EnvironmentFile=/etc/zara-notifier/web.env
             ExecStart=/usr/bin/npm start
             Restart=always
@@ -305,7 +307,8 @@ Resources:
             systemctl daemon-reload
             systemctl enable --now zara-notifier.service
             systemctl enable --now zara-notifier-web.service
-            systemctl enable --now nginx
+            systemctl enable nginx
+            systemctl restart nginx
 
   Instance:
     Type: AWS::EC2::Instance

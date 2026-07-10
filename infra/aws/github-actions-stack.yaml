@@ -1,0 +1,66 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: GitHub Actions OIDC role for deploying Zara Notifier through AWS Systems Manager.
+
+Parameters:
+  GitHubOidcProviderArn:
+    Type: String
+    Description: ARN of the account's token.actions.githubusercontent.com OIDC provider.
+  GitHubOrganization:
+    Type: String
+    Default: diwakarbhatt123
+  GitHubRepository:
+    Type: String
+    Default: ZaraPriceNotifier
+  GitHubBranch:
+    Type: String
+    Default: V1
+  ApplicationStackName:
+    Type: String
+    Default: zara-notifier
+
+Resources:
+  GitHubDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ApplicationStackName}-github-deploy'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Ref GitHubOidcProviderArn
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:sub: !Sub 'repo:${GitHubOrganization}/${GitHubRepository}:ref:refs/heads/${GitHubBranch}'
+      Policies:
+        - PolicyName: DeployThroughSystemsManager
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: ReadApplicationStack
+                Effect: Allow
+                Action: cloudformation:DescribeStacks
+                Resource: !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ApplicationStackName}/*'
+              - Sid: UseRunShellScriptDocument
+                Effect: Allow
+                Action: ssm:SendCommand
+                Resource: !Sub 'arn:${AWS::Partition}:ssm:${AWS::Region}::document/AWS-RunShellScript'
+              - Sid: DeployToTaggedInstance
+                Effect: Allow
+                Action: ssm:SendCommand
+                Resource: !Sub 'arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/*'
+                Condition:
+                  StringEquals:
+                    ssm:resourceTag/Application: zara-notifier
+              - Sid: ReadDeploymentResult
+                Effect: Allow
+                Action:
+                  - ssm:GetCommandInvocation
+                  - ssm:ListCommandInvocations
+                Resource: '*'
+
+Outputs:
+  RoleArn:
+    Value: !GetAtt GitHubDeployRole.Arn

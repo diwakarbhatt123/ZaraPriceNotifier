@@ -1,0 +1,106 @@
+name: Build and deploy
+
+on:
+  push:
+    branches: [V1]
+  workflow_dispatch:
+
+concurrency:
+  group: zara-notifier-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            web/package-lock.json
+      - name: Install backend dependencies
+        run: npm ci --ignore-scripts
+      - name: Check backend syntax
+        run: find src -name '*.js' -print0 | xargs -0 -n1 node --check
+      - name: Install frontend dependencies
+        working-directory: web
+        run: npm ci
+      - name: Build frontend
+        working-directory: web
+        env:
+          NODE_OPTIONS: --max-old-space-size=2048
+          ZARA_API_BASE: http://127.0.0.1:8080
+        run: npm run build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Configure AWS credentials through GitHub OIDC
+        uses: aws-actions/configure-aws-credentials@v6.1.0
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Deploy commit through Systems Manager
+        env:
+          STACK_NAME: ${{ vars.AWS_STACK_NAME }}
+          COMMIT_SHA: ${{ github.sha }}
+          DEPLOY_BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          INSTANCE_ID=$(aws cloudformation describe-stacks \
+            --stack-name "$STACK_NAME" \
+            --query "Stacks[0].Outputs[?OutputKey=='InstanceId'].OutputValue | [0]" \
+            --output text)
+
+          jq -n \
+            --arg sha "$COMMIT_SHA" \
+            --arg branch "$DEPLOY_BRANCH" \
+            '{commands: [
+              "set -euo pipefail",
+              "sudo -u ubuntu git -C /opt/zara-notifier fetch --prune origin " + ($branch | @sh),
+              "sudo -u ubuntu git -C /opt/zara-notifier reset --hard " + (($sha) | @sh),
+              "sudo chmod +x /opt/zara-notifier/infra/aws/remote-deploy.sh",
+              "sudo /opt/zara-notifier/infra/aws/remote-deploy.sh " + (($sha) | @sh) + " " + (($branch) | @sh)
+            ]}' > ssm-parameters.json
+
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "Deploy Zara Notifier $COMMIT_SHA" \
+            --parameters file://ssm-parameters.json \
+            --query Command.CommandId \
+            --output text)
+
+          echo "SSM command: $COMMAND_ID"
+          for attempt in {1..120}; do
+            STATUS=$(aws ssm get-command-invocation \
+              --command-id "$COMMAND_ID" \
+              --instance-id "$INSTANCE_ID" \
+              --query Status --output text 2>/dev/null || echo Pending)
+            case "$STATUS" in
+              Success) break ;;
+              Pending|InProgress|Delayed) sleep 10 ;;
+              *)
+                aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID"
+                exit 1
+                ;;
+            esac
+            if [[ "$attempt" == 120 ]]; then
+              echo "Deployment timed out after 20 minutes."
+              aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID"
+              exit 1
+            fi
+          done
+          aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID" \
+            --query '{Status:Status,Output:StandardOutputContent,Errors:StandardErrorContent}'
