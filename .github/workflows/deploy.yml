@@ -64,7 +64,7 @@ jobs:
             --arg sha "$COMMIT_SHA" \
             --arg branch "$DEPLOY_BRANCH" \
             '{commands: [
-              "set -euo pipefail",
+              "set -eu",
               "sudo -u ubuntu git -C /opt/zara-notifier fetch --prune origin " + ($branch | @sh),
               "sudo -u ubuntu git -C /opt/zara-notifier reset --hard " + (($sha) | @sh),
               "sudo chmod +x /opt/zara-notifier/infra/aws/remote-deploy.sh",
