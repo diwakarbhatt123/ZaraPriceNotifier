@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 import config from '../config.js';
 
 export const sendTelegram = async ({ productId, countryPath, wantedSizes, storeSummary }) => {
