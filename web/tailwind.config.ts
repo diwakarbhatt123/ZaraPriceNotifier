@@ -17,8 +17,8 @@ const config: Config = {
         slate: '#8a8f98'
       },
       fontFamily: {
-        display: ['"Space Grotesk"', 'ui-sans-serif', 'system-ui'],
-        body: ['"Sora"', 'ui-sans-serif', 'system-ui']
+        display: ['"Avenir Next"', 'Avenir', '"Helvetica Neue"', 'ui-sans-serif', 'system-ui'],
+        body: ['Inter', '"Helvetica Neue"', 'ui-sans-serif', 'system-ui']
       },
       boxShadow: {
         soft: '0 20px 60px -30px rgba(0,0,0,0.5)'

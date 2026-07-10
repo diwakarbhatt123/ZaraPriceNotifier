@@ -51,6 +51,10 @@ Notes:
 npm start
 ```
 
+## AWS deployment
+
+A repeatable EC2 CloudFormation deployment is available in [`infra/aws`](infra/aws/README.md). It provisions the instance, static Elastic IP, 20 GB disk, Nginx, systemd services, Puppeteer Chrome, and SSM-backed secrets.
+
 ## Web UI (Next.js)
 The UI lives in `web/` and proxies to this API via Next.js route handlers.
 

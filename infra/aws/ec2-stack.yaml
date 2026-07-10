@@ -1,0 +1,338 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Zara Notifier EC2 deployment with a static Elastic IP, Nginx, systemd, and SSM-managed secrets.
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+  KeyName:
+    Type: String
+    Default: ''
+    Description: Optional EC2 key-pair name. Leave empty to use Systems Manager Session Manager only.
+  RepositoryUrl:
+    Type: String
+    Description: Public HTTPS Git repository URL.
+  RepositoryBranch:
+    Type: String
+    Default: main
+  InstanceType:
+    Type: String
+    Default: t3.micro
+    AllowedValues:
+      - t2.micro
+      - t3.micro
+      - t3.small
+  RootVolumeSize:
+    Type: Number
+    Default: 20
+    MinValue: 16
+  AllowedSshCidr:
+    Type: String
+    Default: ''
+    Description: Required only when KeyName is set. Prefer your public IP with /32.
+  SsmParameterPrefix:
+    Type: String
+    Default: /zara-notifier
+    Description: Prefix containing telegram-bot-token, telegram-chat-id, and optional zara-request-cookie SecureStrings.
+  PollInterval:
+    Type: String
+    Default: PT2M
+  CountryPath:
+    Type: String
+    Default: uk/en
+  ZaraStoreId:
+    Type: Number
+    Default: 10706
+  StoreLocatorLatitude:
+    Type: String
+    Default: '51.5957221'
+  StoreLocatorLongitude:
+    Type: String
+    Default: '-0.2527881'
+  StoreLocatorRadius:
+    Type: Number
+    Default: 30
+  UbuntuAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id
+
+Conditions:
+  EnableSsh: !Not [!Equals [!Ref KeyName, '']]
+
+Resources:
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Zara Notifier web access
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - !If
+          - EnableSsh
+          - IpProtocol: tcp
+            FromPort: 22
+            ToPort: 22
+            CidrIp: !Ref AllowedSshCidr
+          - !Ref AWS::NoValue
+      SecurityGroupEgress:
+        - IpProtocol: '-1'
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: zara-notifier
+
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: ReadZaraNotifierParameters
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParameters
+                Resource: !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${SsmParameterPrefix}/*
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref InstanceRole
+
+  LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: !Sub '${AWS::StackName}-launch-template'
+      LaunchTemplateData:
+        ImageId: !Ref UbuntuAmiId
+        InstanceType: !Ref InstanceType
+        KeyName:
+          Fn::If:
+            - EnableSsh
+            - !Ref KeyName
+            - !Ref AWS::NoValue
+        IamInstanceProfile:
+          Arn: !GetAtt InstanceProfile.Arn
+        MetadataOptions:
+          HttpEndpoint: enabled
+          HttpTokens: required
+        NetworkInterfaces:
+          - DeviceIndex: 0
+            AssociatePublicIpAddress: true
+            Groups:
+              - !Ref SecurityGroup
+            SubnetId: !Ref SubnetId
+        BlockDeviceMappings:
+          - DeviceName: /dev/sda1
+            Ebs:
+              DeleteOnTermination: true
+              Encrypted: true
+              VolumeSize: !Ref RootVolumeSize
+              VolumeType: gp3
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+              - Key: Name
+                Value: zara-notifier
+              - Key: Application
+                Value: zara-notifier
+          - ResourceType: volume
+            Tags:
+              - Key: Application
+                Value: zara-notifier
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            set -euxo pipefail
+            exec > >(tee /var/log/zara-notifier-bootstrap.log | logger -t zara-bootstrap -s 2>/dev/console) 2>&1
+
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update
+            apt-get install -y ca-certificates curl git nginx awscli build-essential python3 make g++
+            curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+            apt-get install -y nodejs
+
+            if ! swapon --show | grep -q /swapfile; then
+              fallocate -l 2G /swapfile
+              chmod 600 /swapfile
+              mkswap /swapfile
+              swapon /swapfile
+              echo '/swapfile none swap sw 0 0' >> /etc/fstab
+            fi
+
+            REPO_DIR=/opt/zara-notifier
+            rm -rf "$REPO_DIR"
+            git clone --depth 1 --branch '${RepositoryBranch}' '${RepositoryUrl}' "$REPO_DIR"
+            chown -R ubuntu:ubuntu "$REPO_DIR"
+
+            install -d -o ubuntu -g ubuntu /home/ubuntu/.cache/puppeteer
+            install -d -o ubuntu -g ubuntu /var/lib/zara-notifier
+            install -d -m 0750 /etc/zara-notifier
+
+            cd "$REPO_DIR"
+            sudo -u ubuntu env HOME=/home/ubuntu PUPPETEER_CACHE_DIR=/home/ubuntu/.cache/puppeteer npm ci
+            env HOME=/home/ubuntu PUPPETEER_CACHE_DIR=/home/ubuntu/.cache/puppeteer npx puppeteer browsers install chrome --install-deps
+            chown -R ubuntu:ubuntu /home/ubuntu/.cache/puppeteer
+
+            cd "$REPO_DIR/web"
+            sudo -u ubuntu env HOME=/home/ubuntu npm ci
+            sudo -u ubuntu env HOME=/home/ubuntu NODE_OPTIONS=--max-old-space-size=768 npm run build
+
+            get_secret() {
+              aws ssm get-parameter --region '${AWS::Region}' --name "$1" --with-decryption --query Parameter.Value --output text 2>/dev/null || true
+            }
+            write_env() {
+              KEY="$1"
+              VALUE="$2"
+              ESCAPED=$(printf '%s' "$VALUE" | sed 's/\\/\\\\/g; s/"/\\"/g')
+              printf '%s="%s"\n' "$KEY" "$ESCAPED"
+            }
+
+            TELEGRAM_TOKEN=$(get_secret '${SsmParameterPrefix}/telegram-bot-token')
+            TELEGRAM_CHAT=$(get_secret '${SsmParameterPrefix}/telegram-chat-id')
+            ZARA_COOKIE=$(get_secret '${SsmParameterPrefix}/zara-request-cookie')
+
+            {
+              write_env NODE_ENV production
+              write_env PORT 8080
+              write_env DB_PATH /var/lib/zara-notifier/zara.db
+              write_env PUPPETEER_CACHE_DIR /home/ubuntu/.cache/puppeteer
+              write_env ZARA_POLL_INTERVAL '${PollInterval}'
+              write_env ZARA_COUNTRY_PATH_DEFAULT '${CountryPath}'
+              write_env ZARA_STORE_ID_DEFAULT '${ZaraStoreId}'
+              write_env ZARA_PLAYWRIGHT_HEADLESS true
+              write_env ZARA_COOKIE_REFRESH_URL https://www.zara.com/
+              write_env ZARA_STORE_LOCATOR_LAT '${StoreLocatorLatitude}'
+              write_env ZARA_STORE_LOCATOR_LNG '${StoreLocatorLongitude}'
+              write_env ZARA_STORE_LOCATOR_RADIUS '${StoreLocatorRadius}'
+              write_env TELEGRAM_BOT_TOKEN "$TELEGRAM_TOKEN"
+              write_env TELEGRAM_CHAT_ID "$TELEGRAM_CHAT"
+              write_env ZARA_REQUEST_COOKIE "$ZARA_COOKIE"
+            } > /etc/zara-notifier/backend.env
+
+            {
+              write_env NODE_ENV production
+              write_env ZARA_API_BASE http://127.0.0.1:8080
+            } > /etc/zara-notifier/web.env
+
+            chmod 0640 /etc/zara-notifier/backend.env /etc/zara-notifier/web.env
+            chown root:ubuntu /etc/zara-notifier/backend.env /etc/zara-notifier/web.env
+
+            cat > /etc/systemd/system/zara-notifier.service <<'EOF'
+            [Unit]
+            Description=Zara Notifier API and poller
+            After=network-online.target
+            Wants=network-online.target
+
+            [Service]
+            Type=simple
+            User=ubuntu
+            Group=ubuntu
+            WorkingDirectory=/opt/zara-notifier
+            EnvironmentFile=/etc/zara-notifier/backend.env
+            ExecStart=/usr/bin/npm start
+            Restart=always
+            RestartSec=5
+            TimeoutStopSec=30
+
+            [Install]
+            WantedBy=multi-user.target
+            EOF
+
+            cat > /etc/systemd/system/zara-notifier-web.service <<'EOF'
+            [Unit]
+            Description=Zara Notifier Next.js UI
+            After=network-online.target zara-notifier.service
+            Wants=network-online.target
+
+            [Service]
+            Type=simple
+            User=ubuntu
+            Group=ubuntu
+            WorkingDirectory=/opt/zara-notifier/web
+            EnvironmentFile=/etc/zara-notifier/web.env
+            ExecStart=/usr/bin/npm start
+            Restart=always
+            RestartSec=5
+            TimeoutStopSec=30
+
+            [Install]
+            WantedBy=multi-user.target
+            EOF
+
+            cat > /etc/nginx/sites-available/zara-notifier <<'EOF'
+            server {
+              listen 80 default_server;
+              listen [::]:80 default_server;
+              server_name _;
+
+              location / {
+                proxy_pass http://127.0.0.1:3000;
+                proxy_http_version 1.1;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+              }
+            }
+            EOF
+
+            rm -f /etc/nginx/sites-enabled/default
+            ln -sfn /etc/nginx/sites-available/zara-notifier /etc/nginx/sites-enabled/zara-notifier
+            nginx -t
+
+            systemctl daemon-reload
+            systemctl enable --now zara-notifier.service
+            systemctl enable --now zara-notifier-web.service
+            systemctl enable --now nginx
+
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      LaunchTemplate:
+        LaunchTemplateId: !Ref LaunchTemplate
+        Version: !GetAtt LaunchTemplate.LatestVersionNumber
+
+  ElasticIp:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: zara-notifier
+
+  ElasticIpAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      AllocationId: !GetAtt ElasticIp.AllocationId
+      InstanceId: !Ref Instance
+
+Outputs:
+  PublicIp:
+    Description: Static Elastic IP for the application.
+    Value: !Ref ElasticIp
+  ApplicationUrl:
+    Value: !Sub http://${ElasticIp}
+  InstanceId:
+    Value: !Ref Instance
+  LaunchTemplateId:
+    Value: !Ref LaunchTemplate
+  BootstrapLog:
+    Value: /var/log/zara-notifier-bootstrap.log

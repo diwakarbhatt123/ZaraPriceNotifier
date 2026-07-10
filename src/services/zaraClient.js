@@ -45,6 +45,7 @@ class ZaraClient {
     }
     this.browser = await puppeteer.launch({
       headless: config.zara.headless ? 'new' : false,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
       args
     });
     this.page = await this.browser.newPage();

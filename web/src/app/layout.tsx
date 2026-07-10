@@ -1,16 +1,5 @@
 import type { Metadata } from 'next';
-import { Space_Grotesk, Sora } from 'next/font/google';
 import './globals.css';
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ['latin'],
-  variable: '--font-display'
-});
-
-const sora = Sora({
-  subsets: ['latin'],
-  variable: '--font-body'
-});
 
 export const metadata: Metadata = {
   title: 'Zara Watchlist',
@@ -24,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${spaceGrotesk.variable} ${sora.variable} font-body`}>{children}</body>
+      <body className="font-body">{children}</body>
     </html>
   );
 }
