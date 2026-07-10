@@ -8,6 +8,11 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        zara: {
+          black: '#111111',
+          gray: '#6f6f6f',
+          paper: '#f7f7f5'
+        },
         ink: '#0b0d12',
         fog: '#f4f1ed',
         ember: '#ff6b3d',
@@ -17,6 +22,7 @@ const config: Config = {
         slate: '#8a8f98'
       },
       fontFamily: {
+        zara: ['Arial', 'Helvetica', 'sans-serif'],
         display: ['"Avenir Next"', 'Avenir', '"Helvetica Neue"', 'ui-sans-serif', 'system-ui'],
         body: ['Inter', '"Helvetica Neue"', 'ui-sans-serif', 'system-ui']
       },
